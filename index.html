@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To My Princess | Amira</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Playfair Display, Montserrat, Dancing Script) -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rose: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            300: '#fda4af',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            900: '#881337',
+                        },
+                        pink: {
+                            400: '#f472b6',
+                            500: '#ec4899',
+                            600: '#db2777',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        cursive: ['Dancing Script', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #0f051d 0%, #290a2b 50%, #1a031e 100%);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background Particle Effect */
+        #canvas-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glowing Text Effect */
+        .glow-text {
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.7),
+                         0 0 20px rgba(244, 63, 94, 0.5),
+                         0 0 35px rgba(236, 72, 153, 0.4);
+        }
+
+        .glow-box {
+            box-shadow: 0 0 25px rgba(244, 63, 94, 0.25);
+            backdrop-filter: blur(12px);
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* Pulse Heart Animation */
+        @keyframes heartPulse {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.15); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.15); }
+            70% { transform: scale(1); }
+        }
+
+        .heart-pulse {
+            animation: heartPulse 1.8s infinite;
+        }
+
+        /* Click Heart Pop Effect */
+        .click-heart {
+            position: absolute;
+            pointer-events: none;
+            animation: popAndFade 1.2s forwards ease-out;
+            z-index: 9999;
+        }
+
+        @keyframes popAndFade {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.4) rotate(0deg);
+            }
+            50% {
+                opacity: 0.9;
+                transform: translate(-50%, -100px) scale(1.3) rotate(15deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -160px) scale(0.8) rotate(-15deg);
+            }
+        }
+
+        /* Envelope Flip 3D */
+        .envelope-wrapper {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            backface-visibility: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a031e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f43f5e;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="relative selection:bg-rose-500 selection:text-white" onclick="createClickHeart(event)">
+
+    <!-- Floating Canvas Background -->
+    <canvas id="canvas-particles"></canvas>
+
+    <!-- Top Floating Audio Player Bar -->
+    <div class="fixed top-4 left-4 right-4 z-50 flex justify-between items-center max-w-5xl mx-auto px-4 py-2 bg-pink-950/40 border border-rose-500/30 rounded-full backdrop-blur-md shadow-lg">
+        <div class="flex items-center gap-3">
+            <button id="music-btn" onclick="toggleAudio(event)" class="w-10 h-10 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center text-white shadow-md hover:scale-105 transition-all">
+                <i id="music-icon" class="fas fa-music"></i>
+            </button>
+            <div class="text-xs sm:text-sm">
+                <p class="font-bold text-rose-200">Melody for Amira ❤️</p>
+                <p id="music-status" class="text-rose-400 text-[10px] sm:text-xs">Click to play music</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 text-rose-300 text-xs sm:text-sm">
+            <span class="hidden sm:inline font-medium">Forever My Princess</span>
+            <i class="fas fa-heart text-rose-500 heart-pulse"></i>
+        </div>
+    </div>
+
+    <!-- Background Music Element -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-piano-112199.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Main Container -->
+    <div class="relative z-10 min-h-screen flex flex-col justify-between pt-24 pb-12 px-4 max-w-4xl mx-auto">
+        
+        <!-- Header Section -->
+        <header class="text-center my-6 animate-float">
+            <div class="inline-block p-2 px-5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm mb-4 tracking-wider uppercase">
+                ✨ A Special Gift For You ✨
+            </div>
+            
+            <h1 class="text-6xl sm:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-pink-400 to-rose-500 glow-text mb-4 font-serif tracking-tight">
+                Amira
+            </h1>
+
+            <p class="text-lg sm:text-xl text-rose-200/90 font-light max-w-xl mx-auto leading-relaxed">
+                To the one who lights up every room and brings endless joy to my world.
+            </p>
+
+            <div class="mt-6 flex justify-center items-center gap-4 text-2xl text-rose-400">
+                <i class="fas fa-sparkles"></i>
+                <i class="fas fa-heart text-rose-500 heart-pulse text-3xl"></i>
+                <i class="fas fa-sparkles"></i>
+            </div>
+        </header>
+
+        <!-- Interactive 3D Envelope Card -->
+        <section class="my-10">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-rose-200 font-serif">Tap the envelope to open your message 💌</h2>
+                <p class="text-xs text-rose-400/80 mt-1">Written with pure love and affection</p>
+            </div>
+
+            <div class="w-full max-w-md mx-auto h-72 sm:h-80 cursor-pointer envelope-wrapper" onclick="toggleCard(event)">
+                <div id="interactive-card" class="card-inner relative w-full h-full rounded-2xl shadow-2xl">
+                    
+                    <!-- Card Front -->
+                    <div class="card-front absolute inset-0 bg-gradient-to-br from-rose-900/80 via-pink-900/60 to-purple-950/90 border border-rose-500/40 rounded-2xl p-6 flex flex-col justify-center items-center text-center glow-box">
+                        <div class="w-20 h-20 rounded-full bg-rose-500/20 border-2 border-rose-400 flex items-center justify-center mb-4 text-4xl text-rose-400 shadow-inner">
+                            <i class="fas fa-envelope-open-text"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white font-serif mb-2">For My Beloved Amira</h3>
+                        <p class="text-sm text-rose-200/70 mb-4">Click here to reveal what's inside ✨</p>
+                        <span class="px-5 py-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold text-xs shadow-lg animate-pulse">
+                            Open Letter 💌
+                        </span>
+                    </div>
+
+                    <!-- Card Back -->
+                    <div class="card-back absolute inset-0 bg-gradient-to-br from-pink-950 via-rose-950 to-slate-950 border-2 border-pink-500/50 rounded-2xl p-6 flex flex-col justify-between text-left glow-box overflow-y-auto">
+                        <div>
+                            <div class="flex justify-between items-center border-b border-rose-500/30 pb-3 mb-3">
+                                <span class="font-bold text-rose-300 font-serif">A Secret Note for Amira</span>
+                                <i class="fas fa-heart text-rose-500"></i>
+                            </div>
+                            <p class="text-sm sm:text-base text-rose-100 leading-relaxed font-cursive">
+                                "Amira... You don't just brighten the room; you brighten my entire life. Your warmth, kindness, and elegance make everything around you so much sweeter. Thank you for being the amazing princess that you are every single day." ❤️
+                            </p>
+                        </div>
+                        <div class="text-right pt-3 border-t border-rose-500/20">
+                            <span class="text-xs text-pink-300 italic">With all my heart ✨</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Reasons Why Amira Is Special -->
+        <section class="my-10">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-rose-200 mb-8 font-serif">
+                Why Amira Is So Truly Special 🌸
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="p-6 rounded-2xl bg-rose-950/30 border border-rose-500/20 hover:border-rose-500/60 backdrop-blur-sm transition-all hover:-translate-y-2 group text-center">
+                    <div class="w-14 h-14 mx-auto rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-smile-beam"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-rose-200 mb-2 font-serif">Radiant Smile</h3>
+                    <p class="text-xs sm:text-sm text-rose-300/80 leading-relaxed">
+                        Your smile can instantly turn any gloomy day into sunshine and joy.
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="p-6 rounded-2xl bg-rose-950/30 border border-rose-500/20 hover:border-rose-500/60 backdrop-blur-sm transition-all hover:-translate-y-2 group text-center">
+                    <div class="w-14 h-14 mx-auto rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-heart-circle-bolt"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-rose-200 mb-2 font-serif">Pure Heart</h3>
+                    <p class="text-xs sm:text-sm text-rose-300/80 leading-relaxed">
+                        Your kindness and gentle nature touch everyone lucky enough to know you.
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="p-6 rounded-2xl bg-rose-950/30 border border-rose-500/20 hover:border-rose-500/60 backdrop-blur-sm transition-all hover:-translate-y-2 group text-center">
+                    <div class="w-14 h-14 mx-auto rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-rose-200 mb-2 font-serif">Royal Grace</h3>
+                    <p class="text-xs sm:text-sm text-rose-300/80 leading-relaxed">
+                        Living up to your name, you carry yourself with unmatched grace and poise.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Memory Gallery Section -->
+        <section class="my-10">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-rose-200 font-serif">Beautiful Memories ✨</h2>
+                <p class="text-xs text-rose-400">Moments created for the prettiest princess</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <!-- Image Frame 1 -->
+                <div class="relative group overflow-hidden rounded-2xl border border-rose-500/30 bg-rose-950/40 p-3 shadow-lg">
+                    <div class="h-56 w-full rounded-xl overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=800&auto=format&fit=crop" 
+                             alt="Romantic Aesthetic" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                             onerror="this.src='https://placehold.co/600x400/3b0764/f43f5e?text=Amira+❤️'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-pink-950/90 via-transparent to-transparent flex items-end p-4">
+                            <span class="text-sm font-semibold text-rose-200">Warm & Love-filled Moments</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Frame 2 -->
+                <div class="relative group overflow-hidden rounded-2xl border border-rose-500/30 bg-rose-950/40 p-3 shadow-lg">
+                    <div class="h-56 w-full rounded-xl overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=800&auto=format&fit=crop" 
+                             alt="Flowers for Amira" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                             onerror="this.src='https://placehold.co/600x400/831843/f43f5e?text=Pretty+Amira'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-pink-950/90 via-transparent to-transparent flex items-end p-4">
+                            <span class="text-sm font-semibold text-rose-200">Flowers That Bloom Just For You</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Compliment Generator Button -->
+        <section class="my-8 text-center">
+            <div class="bg-rose-950/40 border border-rose-500/30 rounded-2xl p-6 backdrop-blur-md max-w-lg mx-auto">
+                <h3 class="text-lg font-bold text-rose-200 mb-3 font-serif">Sweet Note Generator ❤️</h3>
+                <p id="compliment-text" class="text-sm text-pink-100 min-h-[48px] flex items-center justify-center font-light px-4 transition-opacity duration-300">
+                    Click the magic button below to reveal a special note!
+                </p>
+                <button onclick="generateCompliment(event)" class="mt-4 px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 text-white font-bold text-xs sm:text-sm shadow-lg hover:shadow-rose-500/40 hover:scale-105 active:scale-95 transition-all">
+                    <i class="fas fa-wand-magic-sparkles mr-2"></i> Reveal A Sweet Surprise
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-xs text-rose-400/70 border-t border-rose-500/20 pt-6">
+            <p>Made with love for <span class="text-rose-300 font-bold">Amira</span> ✨ ❤️</p>
+            <p class="mt-1 text-[10px] text-rose-500/60">Tap anywhere on the screen for a heart explosion!</p>
+        </footer>
+
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        /* Floating Heart Canvas Particles Effect */
+        const canvas = document.getElementById('canvas-particles');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const particles = [];
+        const heartColors = ['#f43f5e', '#ec4899', '#fda4af', '#e11d48', '#fb7185'];
+
+        class HeartParticle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + Math.random() * 100;
+                this.size = Math.random() * 14 + 8;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.8;
+                this.opacity = Math.random() * 0.6 + 0.2;
+                this.color = heartColors[Math.floor(Math.random() * heartColors.length)];
+                this.angle = Math.random() * 360;
+                this.spin = (Math.random() - 0.5) * 0.02;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                
+                // Draw heart shape
+                ctx.beginPath();
+                const topCurveHeight = this.size * 0.3;
+                ctx.moveTo(0, topCurveHeight);
+                ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+                ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+                ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+                ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.x += this.speedX;
+                this.angle += this.spin;
+
+                if (this.y < -30) {
+                    this.reset();
+                }
+            }
+        }
+
+        for (let i = 0; i < 45; i++) {
+            particles.push(new HeartParticle());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateCanvas);
+        }
+
+        window.onload = function() {
+            animateCanvas();
+        };
+
+        /* Interactive Music Toggle */
+        let isPlaying = false;
+        const audio = document.getElementById('bg-music');
+        const musicIcon = document.getElementById('music-icon');
+        const musicStatus = document.getElementById('music-status');
+
+        function toggleAudio(e) {
+            e.stopPropagation();
+            if (isPlaying) {
+                audio.pause();
+                musicIcon.className = "fas fa-music";
+                musicStatus.innerText = "Click to play music";
+                isPlaying = false;
+            } else {
+                audio.play().then(() => {
+                    musicIcon.className = "fas fa-pause";
+                    musicStatus.innerText = "Playing melody ✨";
+                    isPlaying = true;
+                }).catch(err => {
+                    console.log("Audio play blocked by browser policy.", err);
+                    musicStatus.innerText = "Click again to play";
+                });
+            }
+        }
+
+        /* 3D Envelope Card Flip */
+        function toggleCard(e) {
+            e.stopPropagation();
+            const card = document.getElementById('interactive-card');
+            card.classList.toggle('card-flipped');
+        }
+
+        /* Click Heart Generator */
+        function createClickHeart(e) {
+            const heartIcons = ['❤️', '💖', '✨', '🌸', '💕'];
+            const randomIcon = heartIcons[Math.floor(Math.random() * heartIcons.length)];
+
+            const heartEl = document.createElement('div');
+            heartEl.className = 'click-heart text-2xl sm:text-3xl font-bold select-none';
+            heartEl.innerText = randomIcon;
+            heartEl.style.left = `${e.clientX}px`;
+            heartEl.style.top = `${e.clientY}px`;
+
+            document.body.appendChild(heartEl);
+
+            setTimeout(() => {
+                heartEl.remove();
+            }, 1200);
+        }
+
+        /* English Romantic Compliments */
+        const compliments = [
+            "Amira... your eyes shine brighter than all the stars in the night sky. ✨",
+            "Having you in this world makes every single day so much more beautiful. ❤️",
+            "You are not just a name; you are a whole world of elegance and sweetness, Amira. 🌸",
+            "A single smile from you can instantly change my entire day for the better! 💕",
+            "If beauty were a kingdom, you would be the undisputed queen, Amira. 👑",
+            "Words will never be enough to express how genuinely wonderful you are. 🥰",
+            "May your days always be filled with as much happiness as you bring to others. ✨"
+        ];
+
+        let lastIndex = -1;
+        function generateCompliment(e) {
+            e.stopPropagation();
+            const compText = document.getElementById('compliment-text');
+            compText.style.opacity = '0';
+
+            setTimeout(() => {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * compliments.length);
+                } while (randomIndex === lastIndex);
+
+                lastIndex = randomIndex;
+                compText.innerText = compliments[randomIndex];
+                compText.style.opacity = '1';
+            }, 300);
+        }
+    </script>
+</body>
+</html>
